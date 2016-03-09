@@ -1,0 +1,11 @@
+Package: libpcapR
+Type: Package
+Title: Load libpcap Packet Capture Data
+Version: 0.0.1
+Author: Jon Meek
+Maintainer: Jon Meek <meekjt@gmail.com>
+Description: More about what it does (maybe more than one line)
+License: BSD 3 Clause
+LazyData: TRUE
+LinkingTo: Rcpp,lpcap
+Imports: Rcpp
