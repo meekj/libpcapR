@@ -6,6 +6,9 @@ Author: Jon Meek
 Maintainer: Jon Meek <meekjt@gmail.com>
 Description: More about what it does (maybe more than one line)
 License: BSD 3 Clause
+Depends: R (>= 2.15.1)
+LazyLoad: yes
 LazyData: TRUE
-LinkingTo: Rcpp,lpcap
+LinkingTo: Rcpp
 Imports: Rcpp
+NeedsCompilation: yes
