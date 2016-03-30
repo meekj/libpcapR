@@ -23,7 +23,7 @@
 // WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 
 
-// Development file: $Id: libpcap2.cpp,v 1.7 2016/03/08 23:37:41 meekj Exp $
+// Development file: $Id: libpcap2.cpp,v 1.9 2016/03/23 01:54:09 meekj Exp $
 
 #include <Rcpp.h>
 using namespace Rcpp;
@@ -95,12 +95,13 @@ void decode_packet(u_char *args, const struct pcap_pkthdr *header, const u_char 
 
   char* mac_ptr; // for MAC address extraction
 
-  char ip_src[INET_ADDRSTRLEN];
-  char ip_dst[INET_ADDRSTRLEN];
+  char ip_src[INET6_ADDRSTRLEN]; // Use for both v4 & v6
+  char ip_dst[INET6_ADDRSTRLEN];
   std::string t_tcp_flags = "";
+  tcp_seq t_tcp_seq_num, t_tcp_ack;
 
-  char ip6_src[INET6_ADDRSTRLEN];
-  char ip6_dst[INET6_ADDRSTRLEN];
+  //  char ip6_src[INET6_ADDRSTRLEN];
+  //  char ip6_dst[INET6_ADDRSTRLEN];
 
   int     ts_seconds, ts_useconds;
   double  timestamp = 0;
@@ -173,11 +174,11 @@ void decode_packet(u_char *args, const struct pcap_pkthdr *header, const u_char 
 
       ip_total_length = ntohs(ip6->ip6_plen) + 40;
 
-      inet_ntop(AF_INET6, &(ip6->ip6_src), ip6_src, INET6_ADDRSTRLEN);
-      inet_ntop(AF_INET6, &(ip6->ip6_dst), ip6_dst, INET6_ADDRSTRLEN);
+      inet_ntop(AF_INET6, &(ip6->ip6_src), ip_src, INET6_ADDRSTRLEN);
+      inet_ntop(AF_INET6, &(ip6->ip6_dst), ip_dst, INET6_ADDRSTRLEN);
       
-      src_addr.push_back(ip6_src);
-      dst_addr.push_back(ip6_dst);
+      src_addr.push_back(ip_src);
+      dst_addr.push_back(ip_dst);
       ip_id.push_back(0);
       
       size_ip = 40;          // Fixed size of IPv6 header, should get from .h file
@@ -229,6 +230,9 @@ void decode_packet(u_char *args, const struct pcap_pkthdr *header, const u_char 
 	t_tcp_flags += 'C';
       }
       
+      t_tcp_seq_num = ntohl(tcp->th_seq);
+      t_tcp_ack     = ntohl(tcp->th_ack);
+
       size_payload = ip_total_length - (size_ip + size_tcp);
 
       protocol.push_back("TCP");
@@ -236,8 +240,8 @@ void decode_packet(u_char *args, const struct pcap_pkthdr *header, const u_char 
       dst_port.push_back(ntohs(tcp->th_dport));
       tcp_flags.push_back(t_tcp_flags);
       payload_size.push_back(size_payload);
-      tcp_seq_num.push_back(tcp->th_seq);
-      tcp_ack.push_back(tcp->th_ack);
+      tcp_seq_num.push_back(t_tcp_seq_num);
+      tcp_ack.push_back(t_tcp_ack);
       
       break;
 
@@ -432,7 +436,9 @@ void decode_packet(u_char *args, const struct pcap_pkthdr *header, const u_char 
 //'@param str input filename, libpcap_filter
 //'@return packet data in a data frame
 // [[Rcpp::export]]
+
 DataFrame read_pcap( std::vector< std::string > file_arg, std::vector< std::string > filter_arg, bool debug = false ) {
+// DataFrame read_pcap( std::string file_arg, std::string filter_arg, bool debug = false ) {
 
   std::string sfile = file_arg[0];
   char *file = &sfile[0u];
