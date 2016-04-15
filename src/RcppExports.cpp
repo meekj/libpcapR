@@ -18,32 +18,6 @@ BEGIN_RCPP
     return __result;
 END_RCPP
 }
-// read_pcap
-DataFrame read_pcap(std::vector< std::string > file_arg, std::vector< std::string > filter_arg, bool debug);
-RcppExport SEXP libpcapR_read_pcap(SEXP file_argSEXP, SEXP filter_argSEXP, SEXP debugSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< std::vector< std::string > >::type file_arg(file_argSEXP);
-    Rcpp::traits::input_parameter< std::vector< std::string > >::type filter_arg(filter_argSEXP);
-    Rcpp::traits::input_parameter< bool >::type debug(debugSEXP);
-    __result = Rcpp::wrap(read_pcap(file_arg, filter_arg, debug));
-    return __result;
-END_RCPP
-}
-// read_pcap
-DataFrame read_pcap(std::vector< std::string > file_arg, std::vector< std::string > filter_arg, bool debug);
-RcppExport SEXP libpcapR_read_pcap(SEXP file_argSEXP, SEXP filter_argSEXP, SEXP debugSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< std::vector< std::string > >::type file_arg(file_argSEXP);
-    Rcpp::traits::input_parameter< std::vector< std::string > >::type filter_arg(filter_argSEXP);
-    Rcpp::traits::input_parameter< bool >::type debug(debugSEXP);
-    __result = Rcpp::wrap(read_pcap(file_arg, filter_arg, debug));
-    return __result;
-END_RCPP
-}
 // timesTwo
 NumericVector timesTwo(NumericVector x);
 RcppExport SEXP libpcapR_timesTwo(SEXP xSEXP) {

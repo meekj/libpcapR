@@ -9,22 +9,6 @@ read_pcap <- function(file_arg, filter_arg, debug = FALSE) {
     .Call('libpcapR_read_pcap', PACKAGE = 'libpcapR', file_arg, filter_arg, debug)
 }
 
-#'Load libpcap data into R data frame
-#'
-#'@param str input filename, libpcap_filter
-#'@return packet data in a data frame
-read_pcap <- function(file_arg, filter_arg, debug = FALSE) {
-    .Call('libpcapR_read_pcap', PACKAGE = 'libpcapR', file_arg, filter_arg, debug)
-}
-
-#'Load libpcap data into R data frame
-#'
-#'@param str input filename, libpcap_filter
-#'@return packet data in a data frame
-read_pcap <- function(file_arg, filter_arg, debug = FALSE) {
-    .Call('libpcapR_read_pcap', PACKAGE = 'libpcapR', file_arg, filter_arg, debug)
-}
-
 timesTwo <- function(x) {
     .Call('libpcapR_timesTwo', PACKAGE = 'libpcapR', x)
 }
