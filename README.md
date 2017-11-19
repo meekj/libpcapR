@@ -6,11 +6,13 @@ Load packet header data directly into a data frame
 To install: 
 
  library(devtools)
+ 
  devtools::install_github("meekj/libpcapR")
 
 Test:
 
  File <- '/data/iperf/20100916/t2-192.168.1.1-snd.tcpd'
+ 
  pkt_df <- read_pcap(File, '')
 
 With filter:
