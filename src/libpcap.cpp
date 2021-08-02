@@ -70,9 +70,9 @@ using namespace Rcpp;
 
 // C++ side storage - expandable containers
 std::vector <double>      pkttime;
-std::vector <int>         framesize, ip_id, src_port, dst_port, payload_size;
+std::vector <int>         framesize, ip_id, src_port, dst_port, payload_size, ip_tos, ip_ttl;
 std::vector <u_int>       tcp_seq_num, tcp_ack;
-std::vector <std::string> src_mac, dst_mac, src_addr, dst_addr, protocol, tcp_flags;
+std::vector <std::string> src_mac, dst_mac, src_addr, dst_addr, protocol, tcp_flags, payload;
 
 int reserve_size = 10000; // Vector capacity reserve, don't start small, but may not help much
 
@@ -90,6 +90,7 @@ void decode_packet(u_char *args, const struct pcap_pkthdr *header, const u_char 
   const struct ip6_hdr      *ip6;       // IPv6 header
   const struct tcphdr       *tcp;       // TCP header
   const struct udphdr       *udp;       // UDP header
+  const        char *payload_data;      // Packet payload
 
   int size_frame, size_ip, size_tcp, size_payload, ip_protocol, ip_total_length;
 
@@ -164,6 +165,9 @@ void decode_packet(u_char *args, const struct pcap_pkthdr *header, const u_char 
       src_addr.push_back(ip_src);
       dst_addr.push_back(ip_dst);
 
+      ip_tos.push_back(ip4->ip_tos);
+      ip_ttl.push_back(ip4->ip_ttl);
+
       ip_protocol = ip4->ip_p;
 
       break;
@@ -180,6 +184,8 @@ void decode_packet(u_char *args, const struct pcap_pkthdr *header, const u_char 
       src_addr.push_back(ip_src);
       dst_addr.push_back(ip_dst);
       ip_id.push_back(0);
+      ip_tos.push_back(0);
+      ip_ttl.push_back(0);
       
       size_ip = 40;          // Fixed size of IPv6 header, should get from .h file
       ip_protocol = ip6->ip6_nxt; // Making a general assumption here
@@ -242,6 +248,13 @@ void decode_packet(u_char *args, const struct pcap_pkthdr *header, const u_char 
       payload_size.push_back(size_payload);
       tcp_seq_num.push_back(t_tcp_seq_num);
       tcp_ack.push_back(t_tcp_ack);
+
+      if (size_payload > 0) {
+	payload_data = (char *)(packet + SIZE_ETHERNET + size_ip + size_tcp);
+	payload.push_back(payload_data);
+      } else {
+	payload.push_back("");
+      }
       
       break;
 
@@ -259,6 +272,13 @@ void decode_packet(u_char *args, const struct pcap_pkthdr *header, const u_char 
       tcp_seq_num.push_back(0);
       tcp_ack.push_back(0);
 
+      if (size_payload > 0) {
+	payload_data = (char *)(packet + SIZE_ETHERNET + size_ip + 8);
+	payload.push_back(payload_data);
+      } else {
+	payload.push_back("");
+      }
+
       break;
 
     case IPPROTO_ICMP:
@@ -270,6 +290,7 @@ void decode_packet(u_char *args, const struct pcap_pkthdr *header, const u_char 
       payload_size.push_back(0);
       tcp_seq_num.push_back(0);
       tcp_ack.push_back(0);
+      payload.push_back("");
 
       break;
 
@@ -282,6 +303,7 @@ void decode_packet(u_char *args, const struct pcap_pkthdr *header, const u_char 
       payload_size.push_back(0);
       tcp_seq_num.push_back(0);
       tcp_ack.push_back(0);
+      payload.push_back("");
 
       break;
 
@@ -294,6 +316,7 @@ void decode_packet(u_char *args, const struct pcap_pkthdr *header, const u_char 
       payload_size.push_back(0);
       tcp_seq_num.push_back(0);
       tcp_ack.push_back(0);
+      payload.push_back("");
 
       break;
     }
@@ -308,6 +331,9 @@ void decode_packet(u_char *args, const struct pcap_pkthdr *header, const u_char 
 
     protocol.push_back("802.3");
     ip_id.push_back(0);
+    ip_tos.push_back(0);
+    ip_ttl.push_back(0);
+
     src_addr.push_back("");
     dst_addr.push_back("");
 
@@ -318,6 +344,7 @@ void decode_packet(u_char *args, const struct pcap_pkthdr *header, const u_char 
     payload_size.push_back(0);
     tcp_seq_num.push_back(0);
     tcp_ack.push_back(0);
+      payload.push_back("");
 
     return;
   }
@@ -328,6 +355,8 @@ void decode_packet(u_char *args, const struct pcap_pkthdr *header, const u_char 
   case  ETHERTYPE_ARP:
     protocol.push_back("ARP");
     ip_id.push_back(0);
+    ip_tos.push_back(0);
+    ip_ttl.push_back(0);
     src_addr.push_back("");
     dst_addr.push_back("");
 
@@ -338,12 +367,15 @@ void decode_packet(u_char *args, const struct pcap_pkthdr *header, const u_char 
     payload_size.push_back(0);
     tcp_seq_num.push_back(0);
     tcp_ack.push_back(0);
+      payload.push_back("");
 
     break;
 
   case  ETHERTYPE_REVARP:
     protocol.push_back("RARP");
     ip_id.push_back(0);
+    ip_tos.push_back(0);
+    ip_ttl.push_back(0);
     src_addr.push_back("");
     dst_addr.push_back("");
 
@@ -354,12 +386,15 @@ void decode_packet(u_char *args, const struct pcap_pkthdr *header, const u_char 
     payload_size.push_back(0);
     tcp_seq_num.push_back(0);
     tcp_ack.push_back(0);
+      payload.push_back("");
 
     break;
 
   case  ETHERTYPE_LOOPBACK:
     protocol.push_back("LOOP");
     ip_id.push_back(0);
+    ip_tos.push_back(0);
+    ip_ttl.push_back(0);
     src_addr.push_back("");
     dst_addr.push_back("");
 
@@ -370,12 +405,15 @@ void decode_packet(u_char *args, const struct pcap_pkthdr *header, const u_char 
     payload_size.push_back(0);
     tcp_seq_num.push_back(0);
     tcp_ack.push_back(0);
+      payload.push_back("");
 
     break;
 
   case  ETHERTYPE_PUP:
     protocol.push_back("PUP");
     ip_id.push_back(0);
+    ip_tos.push_back(0);
+    ip_ttl.push_back(0);
     src_addr.push_back("");
     dst_addr.push_back("");
 
@@ -386,7 +424,8 @@ void decode_packet(u_char *args, const struct pcap_pkthdr *header, const u_char 
     payload_size.push_back(0);
     tcp_seq_num.push_back(0);
     tcp_ack.push_back(0);
-    
+          payload.push_back("");
+
     break;
 
     // case  ETHERTYPE_AT: // MacOS X headers seem to be missing these
@@ -415,6 +454,8 @@ void decode_packet(u_char *args, const struct pcap_pkthdr *header, const u_char 
 
     protocol.push_back("UNK");
     ip_id.push_back(0);
+    ip_tos.push_back(0);
+    ip_ttl.push_back(0);
     src_addr.push_back("");
     dst_addr.push_back("");
 
@@ -425,6 +466,7 @@ void decode_packet(u_char *args, const struct pcap_pkthdr *header, const u_char 
     payload_size.push_back(0);
     tcp_seq_num.push_back(0);
     tcp_ack.push_back(0);
+    payload.push_back("");
 
     break;
   }
@@ -469,10 +511,13 @@ DataFrame read_pcap( std::vector< std::string > file_arg, std::vector< std::stri
   dst_addr.clear();
   dst_port.clear();
   ip_id.clear();
+  ip_tos.clear();
+  ip_ttl.clear();
   tcp_flags.clear();
   payload_size.clear();
   tcp_seq_num.clear();
   tcp_ack.clear();
+  payload.clear();
  
   if (debug) Rcout << "Ready to reserve vector capacity\n";
 
@@ -485,10 +530,13 @@ DataFrame read_pcap( std::vector< std::string > file_arg, std::vector< std::stri
   dst_addr.reserve(reserve_size);
   dst_port.reserve(reserve_size);
   ip_id.reserve(reserve_size);
+  ip_tos.reserve(reserve_size);
+  ip_ttl.reserve(reserve_size);
   tcp_flags.reserve(reserve_size);
   payload_size.reserve(reserve_size);
   tcp_seq_num.reserve(reserve_size);
   tcp_ack.reserve(reserve_size);
+  payload.reserve(reserve_size);
 
   if (debug) Rcout << "Ready to open file\n";
 
@@ -552,6 +600,9 @@ DataFrame read_pcap( std::vector< std::string > file_arg, std::vector< std::stri
 				 Rcpp::Named("TCPseq")=tcp_seq_num,
 				 Rcpp::Named("TCPack")=tcp_ack,
 				 Rcpp::Named("PayloadLength")=payload_size,
+				 Rcpp::Named("TOS")=ip_tos,
+				 Rcpp::Named("TTL")=ip_ttl,
+				 Rcpp::Named("Payload")=payload,
 				 _["stringsAsFactors"] = false );
 
 }
